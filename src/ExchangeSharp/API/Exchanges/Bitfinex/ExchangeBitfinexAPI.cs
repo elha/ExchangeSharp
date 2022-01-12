@@ -294,6 +294,65 @@ namespace ExchangeSharp
 			});
 		}
 
+		protected override (string baseCurrency, string quoteCurrency) OnSplitMarketSymbolToCurrencies(string marketSymbol)
+		{
+			var pieces = marketSymbol.Split(MarketSymbolSeparator[0]);
+			if (pieces.Length < 2)
+			{
+				if (marketSymbol.Length == 6)
+					pieces = new string[] { marketSymbol.Substring(0, 3), marketSymbol.Substring(3, 3) };
+				else
+					throw new InvalidOperationException($"Splitting {Name} symbol '{marketSymbol}' with symbol separator '{MarketSymbolSeparator}' must result in at least 2 pieces.");
+			}
+			string baseCurrency = MarketSymbolIsReversed ? pieces[1] : pieces[0];
+			string quoteCurrency = MarketSymbolIsReversed ? pieces[0] : pieces[1];
+			return (baseCurrency, quoteCurrency);
+		}
+
+
+		public override async Task<string> ExchangeMarketSymbolToGlobalMarketSymbolAsync(string marketSymbol)
+		{
+			//await PopulateLookupTables();
+			//var (baseCurrency, quoteCurrency) = await ExchangeMarketSymbolToCurrenciesAsync(marketSymbol);
+			//if (!exchangeCurrencyToNormalizedCurrency.TryGetValue(baseCurrency, out string baseCurrencyNormalized))
+			//{
+			//	baseCurrencyNormalized = baseCurrency;
+			//}
+			//if (!exchangeCurrencyToNormalizedCurrency.TryGetValue(quoteCurrency, out string quoteCurrencyNormalized))
+			//{
+			//	quoteCurrencyNormalized = quoteCurrency;
+			//}
+			//return baseCurrencyNormalized + GlobalMarketSymbolSeparatorString + quoteCurrencyNormalized;
+			return marketSymbol;
+		}
+
+		public override async Task<string> GlobalMarketSymbolToExchangeMarketSymbolAsync(string marketSymbol)
+		{
+			//await PopulateLookupTables();
+			//string[] pieces = marketSymbol.Split('-');
+			//if (pieces.Length < 2)
+			//{
+			//	throw new ArgumentException("Market symbol must be at least two pieces");
+			//}
+			//if (!normalizedCurrencyToExchangeCurrency.TryGetValue(pieces[0], out string baseCurrencyExchange))
+			//{
+			//	baseCurrencyExchange = pieces[0];
+			//}
+			//if (!normalizedCurrencyToExchangeCurrency.TryGetValue(pieces[1], out string quoteCurrencyExchange))
+			//{
+			//	quoteCurrencyExchange = pieces[1];
+			//}
+			//if (!exchangeCurrenciesToMarketSymbol.TryGetValue(baseCurrencyExchange + quoteCurrencyExchange, out string exchangeMarketSymbol))
+			//{
+			//	throw new ArgumentException("Unable to find exchange market for global market symbol " + marketSymbol);
+			//}
+			//return exchangeMarketSymbol;
+			if (marketSymbol.Length == 7 && marketSymbol.Contains("-"))
+				return marketSymbol.Replace("-", "");
+			else
+				return marketSymbol.Replace("-", ":");
+		}
+
 		private ExchangeTrade ParseTradeWebSocket(JToken token)
 		{
 			decimal amount = token[2].ConvertInvariant<decimal>();
