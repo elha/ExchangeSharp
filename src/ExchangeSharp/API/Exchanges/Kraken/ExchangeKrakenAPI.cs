@@ -145,8 +145,14 @@ namespace ExchangeSharp
 			string[] pieces = marketSymbol.Split('-');
 			if (pieces.Length < 2)
 			{
-				throw new ArgumentException("Market symbol must be at least two pieces");
+				if (marketSymbol.Length == 6)
+					pieces = new string[] { marketSymbol.Substring(0, 3), marketSymbol.Substring(3) };
+				else
+					throw new ArgumentException("Market symbol must be at least two pieces");
 			}
+			if (pieces[0] == "XBT") pieces[0] = "BTC";
+			if (pieces[1] == "XBT") pieces[1] = "BTC";
+
 			if (!normalizedCurrencyToExchangeCurrency.TryGetValue(pieces[0], out string baseCurrencyExchange))
 			{
 				baseCurrencyExchange = pieces[0];
@@ -666,7 +672,7 @@ namespace ExchangeSharp
 
 		protected override async Task<Dictionary<string, decimal>> OnGetAmountsAvailableToTradeAsync()
 		{
-			JToken result = await MakeJsonRequestAsync<JToken>("/0/private/TradeBalance", null, await GetNoncePayloadAsync());
+			JToken result = await MakeJsonRequestAsync<JToken>("/0/private/Balance", null, await GetNoncePayloadAsync());
 			Dictionary<string, decimal> balances = new Dictionary<string, decimal>();
 			foreach (JProperty prop in result)
 			{
