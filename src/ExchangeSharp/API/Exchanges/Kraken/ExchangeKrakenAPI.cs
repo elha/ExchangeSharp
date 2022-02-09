@@ -627,17 +627,19 @@ namespace ExchangeSharp
 
 		protected override async Task<IEnumerable<MarketCandle>> OnGetCandlesAsync(string marketSymbol, int periodSeconds, DateTime? startDate = null, DateTime? endDate = null, int? limit = null)
 		{
-			if (limit != null)
-			{
-				throw new APIException("Limit parameter not supported");
-			}
-
 			// https://api.kraken.com/0/public/OHLC
 			// pair = asset pair to get OHLC data for, interval = time frame interval in minutes(optional):, 1(default), 5, 15, 30, 60, 240, 1440, 10080, 21600, since = return committed OHLC data since given id(optional.exclusive)
 			// array of array entries(<time>, <open>, <high>, <low>, <close>, <vwap>, <volume>, <count>)
-			startDate = startDate ?? CryptoUtility.UtcNow.Subtract(TimeSpan.FromDays(1.0));
 			endDate = endDate ?? CryptoUtility.UtcNow;
-			JToken json = await MakeJsonRequestAsync<JToken>("/0/public/OHLC?pair=" + marketSymbol + "&interval=" + (periodSeconds / 60).ToStringInvariant() + "&since=" + startDate);
+			if (!startDate.HasValue)
+				if (limit.HasValue)
+					startDate = endDate.Value.AddSeconds(-periodSeconds * limit.Value);
+				else
+					startDate = CryptoUtility.UtcNow.Subtract(TimeSpan.FromDays(1.0));
+
+			if (marketSymbol.StartsWith("BTC") || marketSymbol.EndsWith("BTC")) marketSymbol = marketSymbol.Replace("BTC", "XBT");
+
+			JToken json = await MakeJsonRequestAsync<JToken>("/0/public/OHLC?pair=" + marketSymbol + "&interval=" + (periodSeconds / 60).ToStringInvariant() + "&since=" + ((int)startDate.Value.UnixTimestampFromDateTimeSeconds()).ToString());
 			List<MarketCandle> candles = new List<MarketCandle>();
 			if (json.Children().Count() != 0)
 			{
@@ -645,7 +647,7 @@ namespace ExchangeSharp
 				foreach (JToken jsonCandle in prop.Value)
 				{
 					MarketCandle candle = this.ParseCandle(jsonCandle, marketSymbol, periodSeconds, 1, 2, 3, 4, 0, TimestampType.UnixSeconds, 6, null, 5, 7);
-					if (candle.Timestamp >= startDate.Value && candle.Timestamp <= endDate.Value)
+					if (candle.Timestamp >= startDate.Value.AddSeconds(-periodSeconds) && candle.Timestamp <= endDate.Value.AddSeconds(+periodSeconds))
 					{
 						candles.Add(candle);
 					}
