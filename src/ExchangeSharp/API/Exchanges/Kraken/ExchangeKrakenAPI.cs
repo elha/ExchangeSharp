@@ -694,15 +694,27 @@ namespace ExchangeSharp
 
 			object nonce = await GenerateNonceAsync();
 			Dictionary<string, object> payload = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-			{ { "pair", order.MarketSymbol }, { "type", (order.IsBuy ? "buy" : "sell") }, { "ordertype", order.OrderType.ToString().ToLowerInvariant() }, { "volume", order.RoundAmount().ToStringInvariant() }, { "trading_agreement", "agree" }, { "nonce", nonce }
+			{
+				{ "pair", order.MarketSymbol },
+				{ "type", (order.IsBuy ? "buy" : "sell") },
+				{ "ordertype", order.OrderType.ToString().ToLowerInvariant() },
+				{ "volume", order.RoundAmount().ToStringInvariant() },
+				{ "trading_agreement", "agree" },
+				{ "nonce", nonce }
 			};
+
 			if (order.OrderType != OrderType.Market)
 			{
 				int precision = BitConverter.GetBytes(Decimal.GetBits((decimal)market.PriceStepSize)[3])[2];
 				if (order.Price == null) throw new ArgumentNullException(nameof(order.Price));
 				payload.Add("price", Math.Round(order.Price.Value, precision).ToStringInvariant());
 			}
-			if (order.IsPostOnly == true) payload["oflags"] = "post"; //  post-only order (available when ordertype = limit)
+
+			if (order.IsPostOnly == true)
+				payload["oflags"] = "post,fciq"; //  post-only order (available when ordertype = limit)
+			else
+				payload["oflags"] = "fciq"; //  fees always in Quotecurrency)
+
 			order.ExtraParameters.CopyTo(payload);
 
 			JToken token = await MakeJsonRequestAsync<JToken>("/0/private/AddOrder", null, payload);

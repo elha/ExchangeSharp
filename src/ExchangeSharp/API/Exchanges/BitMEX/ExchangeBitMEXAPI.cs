@@ -47,6 +47,7 @@ namespace ExchangeSharp
 			WebSocketOrderBookType = WebSocketOrderBookType.FullBookFirstThenDeltas;
 
 			RateLimit = new RateGate(300, TimeSpan.FromMinutes(5));
+			ExchangeGlobalCurrencyReplacements["XBT"] = "BTC";
 		}
 
 		public override Task<string> ExchangeMarketSymbolToGlobalMarketSymbolAsync(string marketSymbol)
@@ -56,7 +57,8 @@ namespace ExchangeSharp
 
 		public override Task<string> GlobalMarketSymbolToExchangeMarketSymbolAsync(string marketSymbol)
 		{
-			throw new NotImplementedException();
+			string m = marketSymbol;
+			return Task.FromResult(m);
 		}
 
 		protected override async Task ProcessRequestAsync(IHttpWebRequest request, Dictionary<string, object> payload)
@@ -87,114 +89,11 @@ namespace ExchangeSharp
 
 		protected internal override async Task<IEnumerable<ExchangeMarket>> OnGetMarketSymbolsMetadataAsync()
 		{
-			/*
-			 {{
-  "symbol": ".XRPXBT",
-  "rootSymbol": "XRP",
-  "state": "Unlisted",
-  "typ": "MRCXXX",
-  "listing": null,
-  "front": null,
-  "expiry": null,
-  "settle": null,
-  "relistInterval": null,
-  "inverseLeg": "",
-  "sellLeg": "",
-  "buyLeg": "",
-  "optionStrikePcnt": null,
-  "optionStrikeRound": null,
-  "optionStrikePrice": null,
-  "optionMultiplier": null,
-  "positionCurrency": "",
-  "underlying": "XRP",
-  "quoteCurrency": "XBT",
-  "underlyingSymbol": "XRPXBT=",
-  "reference": "PLNX",
-  "referenceSymbol": "BTC_XRP",
-  "calcInterval": null,
-  "publishInterval": "2000-01-01T00:01:00Z",
-  "publishTime": null,
-  "maxOrderQty": null,
-  "maxPrice": null,
-  "lotSize": null,
-  "tickSize": 1E-08,
-  "multiplier": null,
-  "settlCurrency": "",
-  "underlyingToPositionMultiplier": null,
-  "underlyingToSettleMultiplier": null,
-  "quoteToSettleMultiplier": null,
-  "isQuanto": false,
-  "isInverse": false,
-  "initMargin": null,
-  "maintMargin": null,
-  "riskLimit": null,
-  "riskStep": null,
-  "limit": null,
-  "capped": false,
-  "taxed": false,
-  "deleverage": false,
-  "makerFee": null,
-  "takerFee": null,
-  "settlementFee": null,
-  "insuranceFee": null,
-  "fundingBaseSymbol": "",
-  "fundingQuoteSymbol": "",
-  "fundingPremiumSymbol": "",
-  "fundingTimestamp": null,
-  "fundingInterval": null,
-  "fundingRate": null,
-  "indicativeFundingRate": null,
-  "rebalanceTimestamp": null,
-  "rebalanceInterval": null,
-  "openingTimestamp": null,
-  "closingTimestamp": null,
-  "sessionInterval": null,
-  "prevClosePrice": null,
-  "limitDownPrice": null,
-  "limitUpPrice": null,
-  "bankruptLimitDownPrice": null,
-  "bankruptLimitUpPrice": null,
-  "prevTotalVolume": null,
-  "totalVolume": null,
-  "volume": null,
-  "volume24h": null,
-  "prevTotalTurnover": null,
-  "totalTurnover": null,
-  "turnover": null,
-  "turnover24h": null,
-  "prevPrice24h": 7.425E-05,
-  "vwap": null,
-  "highPrice": null,
-  "lowPrice": null,
-  "lastPrice": 7.364E-05,
-  "lastPriceProtected": null,
-  "lastTickDirection": "MinusTick",
-  "lastChangePcnt": -0.0082,
-  "bidPrice": null,
-  "midPrice": null,
-  "askPrice": null,
-  "impactBidPrice": null,
-  "impactMidPrice": null,
-  "impactAskPrice": null,
-  "hasLiquidity": false,
-  "openInterest": 0,
-  "openValue": 0,
-  "fairMethod": "",
-  "fairBasisRate": null,
-  "fairBasis": null,
-  "fairPrice": null,
-  "markMethod": "LastPrice",
-  "markPrice": 7.364E-05,
-  "indicativeTaxRate": null,
-  "indicativeSettlePrice": null,
-  "optionUnderlyingPrice": null,
-  "settledPrice": null,
-  "timestamp": "2018-07-05T13:27:15Z"
-}}
-			 */
+			
 
 			List<ExchangeMarket> markets = new List<ExchangeMarket>();
-			JToken allSymbols = await MakeJsonRequestAsync<JToken>("/instrument?count=500&reverse=false");
+			var filter = HttpUtility.UrlEncode("{\"state\":\"Open\", \"typ\":\"FFWCSX\"}");
+			JToken allSymbols = await MakeJsonRequestAsync<JToken>($"/instrument?count=500&filter={filter}&reverse=true");
 			foreach (JToken marketSymbolToken in allSymbols)
 			{
 				var market = new ExchangeMarket
@@ -357,12 +256,6 @@ namespace ExchangeSharp
 
 		protected override async Task<IWebSocket> OnGetPositionsWebSocketAsync(Action<ExchangePosition> callback)
 		{
-			/*
-"{\"info\":\"Welcome to the BitMEX Realtime API.\",\"version\":\"2020-04-08T01:10:16.000Z\",\"timestamp\":\"2020-04-11T11:43:31.856Z\",\"docs\":\"https://testnet.bitmex.com/app/wsAPI\",\"limit\":{\"remaining\":39}}"
-"{\"success\":true,\"request\":{\"op\":\"authKeyExpires\",\"args\":[\"Foo123\",1586605471,\"Bar456\"]}}"
-"{\"success\":true,\"subscribe\":\"position\",\"request\":{\"op\":\"subscribe\",\"args\":\"position\"}}"
-"{\"table\":\"position\",\"action\":\"partial\",\"keys\":[\"account\",\"symbol\"],\"types\":{\"account\":\"long\",\"symbol\":\"symbol\",\"currency\":\"symbol\",\"underlying\":\"symbol\",\"quoteCurrency\":\"symbol\",\"commission\":\"float\",\"initMarginReq\":\"float\",\"maintMarginReq\":\"float\",\"riskLimit\":\"long\",\"leverage\":\"float\",\"crossMargin\":\"boolean\",\"deleveragePercentile\":\"float\",\"rebalancedPnl\":\"long\",\"prevRealisedPnl\":\"long\",\"prevUnrealisedPnl\":\"long\",\"prevClosePrice\":\"float\",\"openingTimestamp\":\"timestamp\",\"openingQty\":\"long\",\"openingCost\":\"long\",\"openingComm\":\"long\",\"openOrderBuyQty\":\"long\",\"openOrderBuyCost\":\"long\",\"openOrderBuyPremium\":\"long\",\"openOrderSellQty\":\"long\",\"openOrderSellCost\":\"long\",\"openOrderSellPremium\":\"long\",\"execBuyQty\":\"long\",\"execBuyCost\":\"long\",\"execSellQty\":\"long\",\"execSellCost\":\"long\",\"execQty\":\"long\",\"execCost\":\"long\",\"execComm\":\"long\",\"currentTimestamp\":\"timestamp\",\"currentQty\":\"long\",\"currentCost\":\"long\",\"currentComm\":\"long\",\"realisedCost\":\"long\",\"unrealisedCost\":\"long\",\"grossOpenCost\":\"long\",\"grossOpenPremium\":\"long\",\"grossExecCost\":\"long\",\"isOpen\":\"boolean\",\"markPrice\":\"float\",\"markValue\":\"long\",\"riskValue\":\"long\",\"homeNotional\":\"float\",\"foreignNotional\":\"float\",\"posState\":\"symbol\",\"posCost\":\"long\",\"posCost2\":\"long\",\"posCross\":\"long\",\"posInit\":\"long\",\"posComm\":\"long\",\"posLoss\":\"long\",\"posMargin\":\"long\",\"posMaint\":\"long\",\"posAllowance\":\"long\",\"taxableMargin\":\"long\",\"initMargin\":\"long\",\"maintMargin\":\"long\",\"sessionMargin\":\"long\",\"targetExcessMargin\":\"long\",\"varMargin\":\"long\",\"realisedGrossPnl\":\"long\",\"realisedTax\":\"long\",\"realisedPnl\":\"long\",\"unrealisedGrossPnl\":\"long\",\"longBankrupt\":\"long\",\"shortBankrupt\":\"long\",\"taxBase\":\"long\",\"indicativeTaxRate\":\"float\",\"indicativeTax\":\"long\",\"unrealisedTax\":\"long\",\"unrealisedPnl\":\"long\",\"unrealisedPnlPcnt\":\"float\",\"unrealisedRoePcnt\":\"float\",\"simpleQty\":\"float\",\"simpleCost\":\"float\",\"simpleValue\":\"float\",\"simplePnl\":\"float\",\"simplePnlPcnt\":\"float\",\"avgCostPrice\":\"float\",\"avgEntryPrice\":\"float\",\"breakEvenPrice\":\"float\",\"marginCallPrice\":\"float\",\"liquidationPrice\":\"float\",\"bankruptPrice\":\"float\",\"timestamp\":\"timestamp\",\"lastPrice\":\"float\",\"lastValue\":\"long\"},\"foreignKeys\":{\"symbol\":\"instrument\"},\"attributes\":{\"account\":\"sorted\",\"symbol\":\"grouped\",\"underlying\":\"grouped\"},\"filter\":{\"account\":12345678},\"data\":[{\"account\":12345678,\"symbol\":\"XBTUSD\",\"currency\":\"XBt\",\"underlying\":\"XBT\",\"quoteCurrency\":\"USD\",\"commission\":0.00075,\"initMarginReq\":0.01,\"maintMarginReq\":0.005,\"riskLimit\":20000000000,\"leverage\":100,\"crossMargin\":true,\"deleveragePercentile\":null,\"rebalancedPnl\":1234,\"prevRealisedPnl\":678,\"prevUnrealisedPnl\":0,\"prevClosePrice\":6905.23,\"openingTimestamp\":\"2020-04-11T11:00:00.000Z\",\"openingQty\":0,\"openingCost\":9876,\"openingComm\":6543,\"openOrderBuyQty\":0,\"openOrderBuyCost\":0,\"openOrderBuyPremium\":0,\"openOrderSellQty\":0,\"openOrderSellCost\":0,\"openOrderSellPremium\":0,\"execBuyQty\":0,\"execBuyCost\":0,\"execSellQty\":0,\"execSellCost\":0,\"execQty\":0,\"execCost\":0,\"execComm\":0,\"currentTimestamp\":\"2020-04-11T11:00:00.330Z\",\"currentQty\":0,\"currentCost\":8765,\"currentComm\":564542,\"realisedCost\":9876,\"unrealisedCost\":0,\"grossOpenCost\":0,\"grossOpenPremium\":0,\"grossExecCost\":0,\"isOpen\":false,\"markPrice\":null,\"markValue\":0,\"riskValue\":0,\"homeNotional\":0,\"foreignNotional\":0,\"posState\":\"\",\"posCost\":0,\"posCost2\":0,\"posCross\":0,\"posInit\":0,\"posComm\":0,\"posLoss\":0,\"posMargin\":0,\"posMaint\":0,\"posAllowance\":0,\"taxableMargin\":0,\"initMargin\":0,\"maintMargin\":0,\"sessionMargin\":0,\"targetExcessMargin\":0,\"varMargin\":0,\"realisedGrossPnl\":-7654,\"realisedTax\":0,\"realisedPnl\":-7654,\"unrealisedGrossPnl\":0,\"longBankrupt\":0,\"shortBankrupt\":0,\"taxBase\":0,\"indicativeTaxRate\":null,\"indicativeTax\":0,\"unrealisedTax\":0,\"unrealisedPnl\":0,\"unrealisedPnlPcnt\":0,\"unrealisedRoePcnt\":0,\"simpleQty\":null,\"simpleCost\":null,\"simpleValue\":null,\"simplePnl\":null,\"simplePnlPcnt\":null,\"avgCostPrice\":null,\"avgEntryPrice\":null,\"breakEvenPrice\":null,\"marginCallPrice\":null,\"liquidationPrice\":null,\"bankruptPrice\":null,\"timestamp\":\"2020-04-11T11:00:00.330Z\",\"lastPrice\":null,\"lastValue\":0}]}"
-			*/
 
 			return await ConnectPublicWebSocketAsync(string.Empty, (_socket, msg) =>
 			{
@@ -397,7 +290,67 @@ namespace ExchangeSharp
 				await _socket.SendMessageAsync(new { op = "subscribe", args = "position" });
 			});
 		}
-		
+
+		protected override async Task<IEnumerable<KeyValuePair<string, ExchangeTicker>>> OnGetTickersAsync()
+		{
+			List<KeyValuePair<string, ExchangeTicker>> tickers = new List<KeyValuePair<string, ExchangeTicker>>();
+			IReadOnlyDictionary<string, ExchangeMarket> marketsBySymbol = (await GetMarketSymbolsMetadataAsync()).ToDictionary(market => market.MarketSymbol, market => market);
+			if (marketsBySymbol != null && marketsBySymbol.Count != 0)
+			{
+				StringBuilder symbolString = new StringBuilder();
+				foreach (var marketSymbol in marketsBySymbol.Keys)
+				{
+					symbolString.Append(marketSymbol.ToUpperInvariant());
+					symbolString.Append(',');
+				}
+				symbolString.Length--;
+				var filter = HttpUtility.UrlEncode("{\"state\":\"Open\", \"typ\":\"FFWCSX\"}");
+				JToken token = await MakeJsonRequestAsync<JToken>("/instrument?symbols=" + symbolString + "&filter=" + filter + "&columns=symbol,askPrice,bidPrice,lastPrice,volume,settlCurrency,lotSize,takerFee,midPrice");
+				DateTime now = CryptoUtility.UtcNow;
+				foreach (JToken array in token)
+				{
+					#region Return Values
+
+					#endregion Return Values
+
+					var marketSymbol = array["symbol"].ToStringInvariant();
+					var market = marketsBySymbol[marketSymbol];
+					tickers.Add(new KeyValuePair<string, ExchangeTicker>(marketSymbol, new ExchangeTicker
+					{
+						Exchange = Name,
+						MarketSymbol = marketSymbol,
+						ApiResponse = token,
+						Ask = array["askPrice"].ConvertInvariant<decimal>(),
+						Bid = array["bidPrice"].ConvertInvariant<decimal>(),
+						Last = array["midPrice"].ConvertInvariant<decimal>(),
+						SettleCurrency = array["settlCurrency"].ToStringInvariant().ToUpper(),
+						LotSize = array["lotSize"].ConvertInvariant<decimal>(),
+						Fee = array["takerFee"].ConvertInvariant<decimal>(),
+						Volume = new ExchangeVolume
+						{
+							QuoteCurrencyVolume = array["volume"].ConvertInvariant<decimal>() * array["lastPrice"].ConvertInvariant<decimal>(),
+							QuoteCurrency = market.QuoteCurrency,
+							BaseCurrencyVolume = array["volume"].ConvertInvariant<decimal>(),
+							BaseCurrency = market.BaseCurrency,
+							Timestamp = now
+						}
+					})) ;
+				}
+			}
+			return tickers;
+		}
+
+		private async Task<ExchangeTicker> ParseTickerAsync(string symbol, JToken token)
+		{
+			// {"priceChange":"-0.00192300","priceChangePercent":"-4.735","weightedAvgPrice":"0.03980955","prevClosePrice":"0.04056700","lastPrice":"0.03869000","lastQty":"0.69300000","bidPrice":"0.03858500","bidQty":"38.35000000","askPrice":"0.03869000","askQty":"31.90700000","openPrice":"0.04061300","highPrice":"0.04081900","lowPrice":"0.03842000","volume":"128015.84300000","quoteVolume":"5096.25362239","openTime":1512403353766,"closeTime":1512489753766,"firstId":4793094,"lastId":4921546,"count":128453}
+			return await this.ParseTickerAsync(token, symbol, "askPrice", "bidPrice", "midPrice", "volume", "quoteVolume", "closeTime", TimestampType.UnixMilliseconds);
+		}
+
+		private async Task<ExchangeTicker> ParseTickerWebSocketAsync(JToken token)
+		{
+			string marketSymbol = token["s"].ToStringInvariant();
+			return await this.ParseTickerAsync(token, marketSymbol, "a", "b", "c", "v", "q", "E", TimestampType.UnixMilliseconds);
+		}
 
 		protected override async Task<IEnumerable<MarketCandle>> OnGetCandlesAsync(string marketSymbol, int periodSeconds, DateTime? startDate = null, DateTime? endDate = null, int? limit = null)
 		{
@@ -476,53 +429,7 @@ namespace ExchangeSharp
 
 		protected override async Task<Dictionary<string, decimal>> OnGetAmountsAsync()
 		{
-			/*
-{[
-  {
-	"account": 93592,
-	"currency": "XBt",
-	"riskLimit": 1000000000000,
-	"prevState": "",
-	"state": "",
-	"action": "",
-	"amount": 141755795,
-	"pendingCredit": 0,
-	"pendingDebit": 0,
-	"confirmedDebit": 0,
-	"prevRealisedPnl": 0,
-	"prevUnrealisedPnl": 0,
-	"grossComm": 0,
-	"grossOpenCost": 0,
-	"grossOpenPremium": 0,
-	"grossExecCost": 0,
-	"grossMarkValue": 0,
-	"riskValue": 0,
-	"taxableMargin": 0,
-	"initMargin": 0,
-	"maintMargin": 0,
-	"sessionMargin": 0,
-	"targetExcessMargin": 0,
-	"varMargin": 0,
-	"realisedPnl": 0,
-	"unrealisedPnl": 0,
-	"indicativeTax": 0,
-	"unrealisedProfit": 0,
-	"syntheticMargin": 0,
-	"walletBalance": 141755795,
-	"marginBalance": 141755795,
-	"marginBalancePcnt": 1,
-	"marginLeverage": 0,
-	"marginUsedPcnt": 0,
-	"excessMargin": 141755795,
-	"excessMarginPcnt": 1,
-	"availableMargin": 141755795,
-	"withdrawableMargin": 141755795,
-	"timestamp": "2018-07-08T07:40:24.395Z",
-	"grossLastValue": 0,
-	"commission": null
-  }
-]}
-			 */
+			
 
 
 			Dictionary<string, decimal> amounts = new Dictionary<string, decimal>();
@@ -530,8 +437,18 @@ namespace ExchangeSharp
 			JToken token = await MakeJsonRequestAsync<JToken>($"/user/margin?currency=all", BaseUrl, payload);
 			foreach (var item in token)
 			{
-				var balance = item["marginBalance"].ConvertInvariant<decimal>();
+				var balance = item["walletBalance"].ConvertInvariant<decimal>();
 				var currency = item["currency"].ToStringInvariant();
+				if (currency =="XBt")
+				{
+					balance /= 100000000m;
+					currency = currency.Replace("t", "T");
+				}
+				if (currency == "USDt")
+				{
+					balance /= 1000000m;
+					currency = currency.Replace("t", "T");
+				}
 
 				if (amounts.ContainsKey(currency))
 				{
@@ -542,6 +459,7 @@ namespace ExchangeSharp
 					amounts[currency] = balance;
 				}
 			}
+
 			return amounts;
 		}
 

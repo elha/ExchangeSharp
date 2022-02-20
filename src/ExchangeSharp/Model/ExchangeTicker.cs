@@ -66,6 +66,9 @@ namespace ExchangeSharp
 		/// Volume info
 		/// </summary>
 		public ExchangeVolume Volume { get; set; }
+		public string SettleCurrency { get; internal set; }
+		public decimal LotSize { get; internal set; }
+		public decimal Fee { get; internal set; }
 
 		/// <summary>
 		/// Get a string for this ticker

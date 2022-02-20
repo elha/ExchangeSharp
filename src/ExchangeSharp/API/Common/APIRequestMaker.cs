@@ -204,7 +204,7 @@ namespace ExchangeSharp
 					{
 						throw new APIException(string.Format("{0} - {1}", response.StatusCode.ConvertInvariant<int>(), response.StatusCode));
 					}
-
+					Logger.Error("APIError " + url + " " + method + " " + responseString);
 					throw new APIException(responseString);
 				}
 
@@ -213,11 +213,13 @@ namespace ExchangeSharp
 			}
 			catch (OperationCanceledException ex) when (cancel.IsCancellationRequested)
 			{
+				Logger.Error("APIError " + url + " " + method + " Timeout");
 				RequestStateChanged?.Invoke(this, RequestMakerState.Error, ex);
 				throw new TimeoutException("APIRequest timeout", ex);
 			}
 			catch (Exception ex)
 			{
+				Logger.Error("APIError " + url + " "  + method + " " + ex.ToString());
 				RequestStateChanged?.Invoke(this, RequestMakerState.Error, ex);
 				throw;
 			}
