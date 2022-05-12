@@ -14,7 +14,7 @@ namespace ExchangeSharp.Coinbase
 {
     using System.Runtime.Serialization;
 
-    internal enum ActionType
+    internal enum PositionType
     {
         [EnumMember(Value = "subscribe")]
         Subscribe,

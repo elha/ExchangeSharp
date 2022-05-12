@@ -305,7 +305,7 @@ namespace ExchangeSharp
 				}
 				symbolString.Length--;
 				var filter = HttpUtility.UrlEncode("{\"state\":\"Open\", \"typ\":\"FFWCSX\"}");
-				JToken token = await MakeJsonRequestAsync<JToken>("/instrument?symbols=" + symbolString + "&filter=" + filter + "&columns=symbol,askPrice,bidPrice,lastPrice,volume,settlCurrency,lotSize,takerFee,midPrice");
+				JToken token = await MakeJsonRequestAsync<JToken>("/instrument?symbols=" + symbolString + "&filter=" + filter + "&columns=symbol,askPrice,bidPrice,lastPrice,volume,settlCurrency,lotSize,takerFee,midPrice,quoteToSettleMultiplier,multiplier");
 				DateTime now = CryptoUtility.UtcNow;
 				foreach (JToken array in token)
 				{
@@ -326,6 +326,8 @@ namespace ExchangeSharp
 						SettleCurrency = array["settlCurrency"].ToStringInvariant().ToUpper(),
 						LotSize = array["lotSize"].ConvertInvariant<decimal>(),
 						Fee = array["takerFee"].ConvertInvariant<decimal>(),
+						QuoteToSettle = array["quoteToSettleMultiplier"].ConvertInvariant<decimal>() /
+						array["multiplier"].ConvertInvariant<decimal>(),
 						Volume = new ExchangeVolume
 						{
 							QuoteCurrencyVolume = array["volume"].ConvertInvariant<decimal>() * array["lastPrice"].ConvertInvariant<decimal>(),

@@ -362,7 +362,7 @@ namespace ExchangeSharp
 					marketSymbols = (await GetMarketSymbolsAsync()).ToArray();
 				}
 				var chan = new Channel { Name = ChannelType.Level2, ProductIds = marketSymbols.ToList() };
-				var channelAction = new ChannelAction { Type = ActionType.Subscribe, Channels = new List<Channel> { chan } };
+				var channelAction = new ChannelAction { Type = PositionType.Subscribe, Channels = new List<Channel> { chan } };
 				await _socket.SendMessageAsync(channelAction);
 			});
 		}

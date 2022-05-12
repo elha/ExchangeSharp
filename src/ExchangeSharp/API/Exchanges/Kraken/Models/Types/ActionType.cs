@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ExchangeSharp.API.Exchanges.Kraken.Models.Types
 {
-	internal enum ActionType
+	internal enum PositionType
 	{
 		[EnumMember(Value = "subscribe")]
 		Subscribe,

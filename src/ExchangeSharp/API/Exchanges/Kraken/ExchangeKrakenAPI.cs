@@ -1214,7 +1214,7 @@ namespace ExchangeSharp
 			   // subscribe to order book channel for each symbol
 			   var channelAction = new ChannelAction
 			   {
-				   Event = ActionType.Subscribe,
+				   Event = PositionType.Subscribe,
 				   Pairs = marketSymbols.ToList(),
 				   SubscriptionSettings = new Subscription
 				   {

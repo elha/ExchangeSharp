@@ -21,7 +21,7 @@ namespace ExchangeSharp.Coinbase
     {
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty("type")]
-        public ActionType Type { get; set; }
+        public PositionType Type { get; set; }
 
         [JsonProperty("channels")]
         public List<Channel> Channels { get; set; }

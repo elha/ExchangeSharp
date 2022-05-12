@@ -11,7 +11,7 @@ namespace ExchangeSharp.API.Exchanges.Kraken.Models.Request
 	{
 		[JsonConverter(typeof(StringEnumConverter))]
 		[JsonProperty("event")]
-		public ActionType Event { get; set; }
+		public PositionType Event { get; set; }
 
 		[JsonProperty("pair")]
 		public List<string> Pairs { get; set; }

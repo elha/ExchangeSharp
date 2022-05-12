@@ -69,6 +69,7 @@ namespace ExchangeSharp
 		public string SettleCurrency { get; internal set; }
 		public decimal LotSize { get; internal set; }
 		public decimal Fee { get; internal set; }
+		public decimal QuoteToSettle { get; internal set; } = 1.0m;
 
 		/// <summary>
 		/// Get a string for this ticker
